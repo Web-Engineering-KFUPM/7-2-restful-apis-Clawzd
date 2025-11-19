@@ -14,14 +14,47 @@ app.use(express.json());
 
 await connectDB(process.env.MONGO_URL);
 
-// api/songs (Read all songs)
+app.get("/api/songs", async (req, res) => {
+  try {
+    const songs = await Song.find();
+    res.json(songs);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
+app.post("/api/songs", async (req, res) => {
+  try {
+    const song = new Song(req.body);
+    await song.save();
+    res.status(201).json(song);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
 
-// api/songs (Insert song)
+app.put("/api/songs/:id", async (req, res) => {
+  try {
+    const song = await Song.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!song) {
+      return res.status(404).json({ message: "Song not found" });
+    }
+    res.json(song);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
 
-// /api/songs/:id (Update song)
-
-
-// /api/songs/:id (Delete song)
+app.delete("/api/songs/:id", async (req, res) => {
+  try {
+    const song = await Song.findByIdAndDelete(req.params.id);
+    if (!song) {
+      return res.status(404).json({ message: "Song not found" });
+    }
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`));
